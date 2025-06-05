@@ -5,6 +5,13 @@ const generateToken = (userId) => {
 };
 
 // Verify a JWT token
+/**
+ * Verifies a JWT token and returns the decoded payload.
+ * If the token is invalid or expired, returns null.
+ *
+ * @param {string} token - The JWT token to verify
+ * @returns {object|null} The decoded payload or null if invalid/expired
+ */
 const verifyToken = (token) => {
     try {
         return jwt.verify(token, process.env.JWT_SECRET);

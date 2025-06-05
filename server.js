@@ -56,14 +56,23 @@ const storage = multer.diskStorage({
     }
 });
 
+/**
+ * Filter function to validate file types
+ * @param {Express.Request} req - The request object
+ * @param {Express.Multer.File} file - The file to be validated
+ * @param {Function} cb - The callback function
+ */
 const fileFilter = (req, file, cb) => {
+    // Allowed file types
     const allowedTypes = /mp4|jpeg|jpg|png|gif|mp3|webp|jfif/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
 
     if (extname && mimetype) {
+        // File is valid, return true
         cb(null, true);
     } else {
+        // File is invalid, return error
         cb(new Error('Only images are allowed!'), false);
     }
 };
@@ -1146,128 +1155,128 @@ app.get('/product-id', authenticate, async (req, res) => {
 
 // end part 4-16-2025
 // done 4-15-2025
+//// purchase_order_items apis
+// app.post('/purchase_order_items', authenticate, async (req, res) => {
+//     try {
+//         const { item_id, product_id, quantity, status ,price } = req.body;
 
-app.post('/purchase_order_items', authenticate, async (req, res) => {
-    try {
-        const { item_id, product_id, quantity, status ,price } = req.body;
 
+//         if (!req.body || Object.keys(req.body).length === 0) {
+//             return res.status(400).json({ message: 'No data provided' });
+//         }
 
-        if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).json({ message: 'No data provided' });
-        }
+//         if (typeof status !== 'boolean') {
+//             return res.status(400).json({ message: 'Status must be true or false only' });
+//         }
+//         if (!item_id || !product_id || !quantity || status == null || !price) {
+//             return res.status(400).json({ message: 'all fields are required' });
+//         }
+//         const allowedfields = [
+//             'item_id',
+//             'product_id',
+//             'quantity',
+//             'price',
+//             'status'
+//         ];
+//         if (item_id.length > 50) {
+//             return res.status(400).json({
+//                 error: "item_id must be 50 characters or fewer.",
+//             });
+//         }
 
-        if (typeof status !== 'boolean') {
-            return res.status(400).json({ message: 'Status must be true or false only' });
-        }
-        if (!item_id || !product_id || !quantity || status == null || !price) {
-            return res.status(400).json({ message: 'all fields are required' });
-        }
-        const allowedfields = [
-            'item_id',
-            'product_id',
-            'quantity',
-            'price',
-            'status'
-        ];
-        if (item_id.length > 50) {
-            return res.status(400).json({
-                error: "item_id must be 50 characters or fewer.",
-            });
-        }
+//         const extraFields = Object.keys(!req.body).filter(key => !allowedfields.includes(key));
+//         if (extraFields.length > 0) {
+//             return res.status(400).json({ message: `Invalid field(s): ${extraFields.join(', ')}` });
+//         }
+//         console.log("payload", req.body);
+//         const already_item_id = `SELECT * FROM purchase_order_items WHERE item_id ='${item_id}'`;
+//         // const already_order_id =`SELECT * FROM purchase_order_items WHERE order_id ='${order_id}'`;
+//         // const already_product_id =`SELECT * FROM purchase_order_items WHERE product_id ='${product_id}'`;
+//         const [iteamidresult] = await Promise.all([
+//             pool.query(already_item_id)
+//             // pool.query(already_order_id),
+//             // pool.query(already_product_id)
+//         ])
+//         if (iteamidresult.rows.length > 0) {
+//             return res.status(400).json({ message: 'item_id already exists' });
+//         }
+//         const query = {
+//             text: `INSERT INTO public.purchase_order_items(
+// 	 item_id, product_id, quantity,status,price)
+// 	VALUES ( $1, $2, $3, $4, $5 ) RETURNING *`,
+//             values: [item_id, product_id, quantity, status, price],
+//         };
+//         const result = await pool.query(query);
+//         if (result?.rowCount === 0) {
+//             return res.status(400).json({ message: 'Product not added' });
+//         }
+//         res.status(200).json({ message: 'Order added sucessfully', status: true, status_code: 200 });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: 'Internal server error in order iteam added', error: error.message });
+//     }
 
-        const extraFields = Object.keys(!req.body).filter(key => !allowedfields.includes(key));
-        if (extraFields.length > 0) {
-            return res.status(400).json({ message: `Invalid field(s): ${extraFields.join(', ')}` });
-        }
-        console.log("payload", req.body);
-        const already_item_id = `SELECT * FROM purchase_order_items WHERE item_id ='${item_id}'`;
-        // const already_order_id =`SELECT * FROM purchase_order_items WHERE order_id ='${order_id}'`;
-        // const already_product_id =`SELECT * FROM purchase_order_items WHERE product_id ='${product_id}'`;
-        const [iteamidresult] = await Promise.all([
-            pool.query(already_item_id)
-            // pool.query(already_order_id),
-            // pool.query(already_product_id)
-        ])
-        if (iteamidresult.rows.length > 0) {
-            return res.status(400).json({ message: 'item_id already exists' });
-        }
-        const query = {
-            text: `INSERT INTO public.purchase_order_items(
-	 item_id, product_id, quantity,status,price)
-	VALUES ( $1, $2, $3, $4, $5 ) RETURNING *`,
-            values: [item_id, product_id, quantity, status, price],
-        };
-        const result = await pool.query(query);
-        if (result?.rowCount === 0) {
-            return res.status(400).json({ message: 'Product not added' });
-        }
-        res.status(200).json({ message: 'Order added sucessfully', status: true, status_code: 200 });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error in order iteam added', error: error.message });
-    }
-
-});
+// });
 // done 4-14-2025
 
-app.get('/get-purchase_order_items', authenticate, async (req, res) => {
-    try {
-        const query = {
-            text: `SELECT * FROM purchase_order_items`,
-        };
-        const result = await pool.query(query);
-        res.status(200).json({ message: 'Order items fetched sucessfully', order: result.rows });
+// app.get('/get-purchase_order_items', authenticate, async (req, res) => {
+//     try {
+//         const query = {
+//             text: `SELECT * FROM purchase_order_items`,
+//         };
+//         const result = await pool.query(query);
+//         res.status(200).json({ message: 'Order items fetched sucessfully', order: result.rows });
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error in product fetched' });
-    }
-}
-);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: 'Internal server error in product fetched' });
+//     }
+// }
+// );
 // update purchase order items 
-app.put('/update-purchase_order_items',authenticate, async (req ,res )=>{
- const {
-       product_id, quantity, status ,price ,record_id
- } = req.body;
+// app.put('/update-purchase_order_items',authenticate, async (req ,res )=>{
+//  const {
+//        product_id, quantity, status ,price ,record_id
+//  } = req.body;
 
- if (!req.body || Object.keys(req.body).length === 0) {
-     return res.status(400).json({ message: 'No data provided' });
- }
-    if (!product_id || !quantity || status == null || !price) {
-        return res.status(400).json({ message: 'all fields are required' });
-    }
+//  if (!req.body || Object.keys(req.body).length === 0) {
+//      return res.status(400).json({ message: 'No data provided' });
+//  }
+//     if (!product_id || !quantity || status == null || !price) {
+//         return res.status(400).json({ message: 'all fields are required' });
+//     }
 
-    if (!record_id){
-        return res.status(400).json({ message: 'no order record found' });
-    }
+//     if (!record_id){
+//         return res.status(400).json({ message: 'no order record found' });
+//     }
     
- if(typeof status  !== 'boolean'){
-return res.status(400).json({ message: 'Status must be true or false only' }); 
-}
-const allowedfields = [
-    'product_id',
-    'quantity',
-    'status',
-    'price'
-];
-const extraFields = Object.keys(!req.body).filter(key => !allowedfields.includes(key));
-if (extraFields.length > 0) {
-    return res.status(400).json({ message: `Invalid field(s): ${extraFields.join(', ')}` });
-}
-console.log("payload", req.body);
-try{
-    const query ={
-        text:`UPDATE  public.purchase_order_items SET product_id ='${product_id}', quantity ='${quantity}',
-        status =${status}, price ='${price} where record_id = '${record_id}' RETURNING *`,
-    }
-    const result = await pool.query(query);
-    res.status(200).json({ message: 'purchase order items updated sucessfully', purchase_order_items: result.rows ,count: result.rows.length});
-}
-catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error in product fetched', error: error.message });
-}
-});
+//  if(typeof status  !== 'boolean'){
+// return res.status(400).json({ message: 'Status must be true or false only' }); 
+// }
+// const allowedfields = [
+//     'product_id',
+//     'quantity',
+//     'status',
+//     'price'
+// ];
+// const extraFields = Object.keys(!req.body).filter(key => !allowedfields.includes(key));
+// if (extraFields.length > 0) {
+//     return res.status(400).json({ message: `Invalid field(s): ${extraFields.join(', ')}` });
+// }
+// console.log("payload", req.body);
+// try{
+//     const query ={
+//         text:`UPDATE  public.purchase_order_items SET product_id ='${product_id}', quantity ='${quantity}',
+//         status =${status}, price ='${price} where record_id = '${record_id}' RETURNING *`,
+//     }
+//     const result = await pool.query(query);
+//     res.status(200).json({ message: 'purchase order items updated sucessfully', purchase_order_items: result.rows ,count: result.rows.length});
+// }
+// catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Internal server error in product fetched', error: error.message });
+// }
+// });
 
 // delete purchase order items
 // app.delete('/delete-purchase_order_items', authenticate, async (req, res) =>
