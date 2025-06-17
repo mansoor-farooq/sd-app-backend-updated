@@ -12,6 +12,7 @@ const { authenticate } = require('./src/utils/authorization/authenticate');
 const { stat } = require('fs');
 const { type } = require('os');
 const assert = require('assert');
+const { nameRegex, fullnameRegex, emailRegex, passwordRegex, mobileRegex, latitudeRegex, longitudeRegex, websitesRegex, addressRegex } = require('./src/utils/authorization/regexauth');
 
 const app = express();
 
@@ -110,6 +111,29 @@ app.post('/add-user', upload.single("profile"), authenticate, async (req, res) =
             return res.status(400).json({ message: 'No data provided' });
         }
 
+        if (fullnameRegex.test(fullname) === false) {
+            return res.status(400).json({ message: 'Invalid fullname format' });
+        }
+       
+        if (emailRegex.test(email)=== false){
+            return res.status(400).json({ message: 'Invalid email format ' });
+        }
+        
+        if (passwordRegex.test(password)=== false){
+            return res.status(400).json({ message: 'Invalid password format  like this StrongPass@2025' });
+        }
+        if (mobileRegex.test(mobile)=== false){
+            return res.status(400).json({ message: 'Invalid mobile  format 03xx-xxxxxxx' });
+        }
+        if (latitudeRegex.test(latitude)=== false){
+            return res.status(400).json({ message: 'Invalid latitude format 24.8607' });
+        }
+        if (longitudeRegex.test(longitude)=== false){
+            return res.status(400).json({ message: 'Invalid longitude format 67.0011' });
+        }
+
+
+
         const base = 'http://localhost:9900/static/images/'
         const file = req.file
         console.log("profile", file.filename)
@@ -164,9 +188,35 @@ app.put('/update-users-data', upload.single("profile"), authenticate, async (req
     if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: 'No data provided' });
     }
+   
 
     const { fullname, email, password, role, latitude, longitude, profile, status, mobile, countrys, city, id, update_by,
     } = req.body;
+
+    if (fullnameRegex.test(fullname) === false) {
+        return res.status(400).json({ message: 'Invalid fullname format' });
+    }
+
+    if (emailRegex.test(email) === false) {
+        return res.status(400).json({ message: 'Invalid email format ' });
+    }
+
+    if (passwordRegex.test(password) === false) {
+        return res.status(400).json({ message: 'Invalid password format  like this StrongPass@2025' });
+    }
+    if (mobileRegex.test(mobile) === false) {
+        return res.status(400).json({ message: 'Invalid mobile  format 03xx-xxxxxxx' });
+    }
+    if (latitudeRegex.test(latitude) === false) {
+        return res.status(400).json({ message: 'Invalid latitude format 24.8607' });
+    }
+    if (longitudeRegex.test(longitude) === false) {
+        return res.status(400).json({ message: 'Invalid longitude format 67.0011' });
+    }
+
+
+
+
     const base = 'http://localhost:9900/static/images/'
     const file = req?.file
     console.log("profile", req?.file)
@@ -312,6 +362,7 @@ app.post('/add-role', authenticate, async (req, res) => {
         return res.status(400).json({ message: 'No data provided' });
     }
 
+
     try {
         const allowedFields = ['role_name', 'created_by', 'updated_by', 'status'];
         const invalidFields = Object.keys(req.body).filter(field => !allowedFields.includes(field));
@@ -359,6 +410,14 @@ app.post('/user-login', async (req, res) => {
             return res.status(400).json({ message: 'No data provided' });
         }
 
+        if (emailRegex.test(email) === false) {
+            return res.status(400).json({ message: 'Invalid email format ' });
+        }
+
+        if (passwordRegex.test(password) === false) {
+            return res.status(400).json({ message: 'Invalid password format  like this StrongPass@2025' });
+        }
+
         const query = {
             text: `SELECT * FROM users  WHERE email = $1
             AND password =$2 ;`,
@@ -379,6 +438,7 @@ app.post('/user-login', async (req, res) => {
         res.status(500).json({ message: 'Internal server error', error: error.message })
     }
 });
+
 app.get('/get-all-lols', authenticate, async (req, res) => {
     try {
         const query = {
@@ -410,6 +470,38 @@ app.post('/add-store', upload.single("profile"), authenticate, async (req, res) 
         tax_ntn, location, created_by, approved_by,
         date, creation_date, status
     } = req.body;
+    if (nameRegex.test(store_name) === false) {
+        return res.status(400).json({ message: 'Invalid store name format' });
+    }
+    if (latitudeRegex.test(latitudes) === false) {
+        return res.status(400).json({ message: 'Invalid latitude format 24.8607' });
+    }
+    if (longitudeRegex.test(longitude) === false) {
+        return res.status(400).json({ message: 'Invalid longitude format 67.0011' });
+
+    }
+    if (emailRegex.test(email) === false) {
+        return res.status(400).json({ message: 'Invalid email format ' });
+    }
+    if (mobileRegex.test(phone) === false) {
+        return res.status(400).json({ message: 'Invalid phone format 03xx-xxxxxxx' });
+    }   
+
+
+    if (websitesRegex.test(website) === false) {
+        return res.status(400).json({ message: 'Invalid website format' });
+    }
+    if (addressRegex.test(address)=== false){
+        return res.status(400).json({
+            message: 'Invalid address format St. Johns Road, Saddar, Karachi' });
+    }
+
+    if (fullnameRegex.test(store_owner_name) === false) {
+        return res.status(400).json({ message: 'Invalid store owner name format' });
+    }
+    if (fullnameRegex.test(purchase_name) === false) {
+        return res.status(400).json({ message: 'Invalid purchase name format' });
+    }
 
     const sortedImage = `${base}${file.filename}`;
 
@@ -1061,69 +1153,7 @@ app.put('/update_product', authenticate, async (req, res) => {
     }
 });
 
-// app.put('/update_product', authenticate, async (req, res) => {
-//     try {
-//         const { id, name, description, sku, unit, purchase_price, selling_price, status } = req.body;
-
-//         // Generate timestamp
-//         const updatedAt = new Date().toISOString();
-//         console.log("Attempting to set updated_at to:", updatedAt);
-
-//         const query = {
-//             text: `UPDATE public.products
-//                    SET name = $1,
-//                        description = $2,
-//                        sku = $3,
-//                        unit = $4,
-//                        purchase_price = $5,
-//                        selling_price = $6,
-//                        updated_at = $7,
-//                        status = $8
-//                    WHERE record_id = $9
-//                    RETURNING *`,
-//             values: [
-//                 name,
-//                 description,
-//                 sku,
-//                 unit,
-//                 parseFloat(purchase_price),
-//                 parseFloat(selling_price),
-//                 updatedAt,
-//                 status,
-//                 id
-//             ]
-//         };
-
-//         console.log("Safe parameterized query:", {
-//             text: query.text,
-//             values: query.values
-//         });
-
-//         const result = await pool.query(query);
-
-//         if (result.rows.length === 0) {
-//             return res.status(404).json({ message: 'Product not found' });
-//         }
-
-//         res.status(200).json({
-//             message: 'Product updated successfully',
-//             product: result.rows,
-//             count: result.rows.length
-//         });
-
-//     } catch (error) {
-//         console.error('Update error:', {
-//             message: error.message,
-//             stack: error.stack,
-//             detail: error.detail
-//         });
-//         res.status(500).json({
-//             message: 'Internal server error',
-//             error: error.message
-//         });
-//     }
-// });
-
+// Get all products
 app.get('/get-product', authenticate, async (req, res) => {
     try {
         const query = {
@@ -1157,14 +1187,14 @@ app.get('/product-id', authenticate, async (req, res) => {
 
 app.post('/purchase_orders', authenticate, async (req, res) => {
     try {
-        const { order_id, supplier_id, order_date, expected_delivery_date, total_amount, remarks, status } = req.body;
+        const { order_id, supplier_id, order_date, expected_delivery_date, total_amount, remarks, status, product_id } = req.body;
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({ message: 'No data provided' });
         }
         if (typeof status !== 'boolean') {
             return res.status(400).json({ message: 'Status must be true or false only' });
         }
-        if (!order_id || !supplier_id || !order_date || !expected_delivery_date || !total_amount || !remarks || status == null) {
+        if (!order_id || !supplier_id || !order_date || !expected_delivery_date || !total_amount || !remarks || status == null || !product_id) {
             return res.status(400).json({ message: 'all fields are required' });
         }
         const allowedfields = [
@@ -1174,7 +1204,8 @@ app.post('/purchase_orders', authenticate, async (req, res) => {
             'expected_delivery_date',
             'total_amount',
             'remarks',
-            'status'
+            'status',
+            'product_id'
         ];
         const extraFields = Object.keys(!req.body).filter(key => !allowedfields.includes(key));
         if (extraFields.length > 0) {
@@ -1189,13 +1220,11 @@ app.post('/purchase_orders', authenticate, async (req, res) => {
         if (orderidresult.rows.length > 0) {
             return res.status(400).json({ message: 'order_id already exists' });
         }
-      
-
         const query = {
             text: `INSERT INTO public.purchase_orders(
-        order_id, supplier_id,order_date,expected_delivery_date,total_amount,remarks,status
-    )VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-            values: [order_id, supplier_id, order_date, expected_delivery_date, total_amount, remarks, status],
+        order_id, supplier_id,order_date,expected_delivery_date,total_amount,remarks,status,product_id
+    )VALUES($1, $2, $3, $4, $5, $6, $7 , $8) RETURNING *`,
+            values: [order_id, supplier_id, order_date, expected_delivery_date, total_amount, remarks, status, product_id],
         };
         const result = await pool.query(query);
         if (result?.rowCount === 0) {
@@ -1212,7 +1241,17 @@ app.post('/purchase_orders', authenticate, async (req, res) => {
 app.get('/get_purchase_orders', authenticate, async (req, res) => {
     try {
         const query = {
-            text: `SELECT * FROM purchase_orders`,
+            text: `SELECT 
+    suppliers.name AS spname,
+    suppliers.*,
+    purchase_orders.*,
+    products.*
+FROM suppliers
+inner join purchase_orders 
+on suppliers.record_id = purchase_orders.supplier_id 
+inner join products 
+on  products.record_id = purchase_orders.product_id
+`,
         };
         const result = await pool.query(query);
         res.status(200).json({ message: 'product fetched sucessfully', product: result.rows });
@@ -1224,12 +1263,81 @@ app.get('/get_purchase_orders', authenticate, async (req, res) => {
 });
 
 // api done and ui started 4-14-2025
+// creating new purchase order items update  10-6-2025
+
+app.put('/update-purchase-orders', authenticate , async (req, res)=>{
+    const {  supplier_id, order_date, expected_delivery_date, total_amount, remarks, status, product_id, record_id } = req.body;
+    if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ message: 'No data provided' });
+    }
+    if (!supplier_id || !order_date || !expected_delivery_date || !total_amount || !remarks || status == null || !product_id || !record_id) {
+        return res.status(400).json({ message: 'all fields are required' });
+    }
+    if (typeof status !== 'boolean') {
+        return res.status(400).json({ message: 'Status must be true or false only' });
+    }
+
+const allowed=[
+    'supplier_id',
+    'order_date',
+    'expected_delivery_date',
+    'total_amount',
+    'remarks',
+    'status',
+    'product_id',
+    'record_id'
+]
+const extraFields = Object.keys(req.body).filter(key => !allowed.includes(key));
+if (extraFields.length > 0) {
+    return res.status(400).json({ message: `Invalid field(s): ${extraFields.join(', ')}` });
+}
+    try{ 
+const query ={
+    text: `UPDATE public.purchase_orders
+SET  
+    supplier_id = $1,
+    order_date = $2,
+    expected_delivery_date = $3,
+    total_amount = $4,
+    remarks = $5,
+    status = $6,
+    product_id = $7
+WHERE  
+    record_id = $8 ; `,
+    values: [supplier_id, order_date, expected_delivery_date, total_amount, remarks, status, product_id, record_id]
+}
+  const result = await pool.query(query);
+  if(result?.rowCount === 0 ){
+    return res.status(400).json({message: 'Product not updated', status: false, status_code: 400});
+  }
+  res.status(200).json({ message: `purchase order updated sucessfully`, purchase_order: result.rows, count: result.rows.length });
+
+ 
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error in purchase order updated', error: error.message });
+    } 
+
+})
+
+// end  point ha ya  purchase order 
 
 app.get('/get-purchase_order', authenticate, async (req, res) => {
     try {
         const query = {
-            text: `select * from purchase_orders order by created_at desc`,
-        };
+            text: `SELECT 
+            suppliers.name AS spname,
+            suppliers.*,
+            purchase_orders.*,
+            products.*
+        FROM suppliers
+        inner join purchase_orders 
+        on suppliers.record_id = purchase_orders.supplier_id 
+        inner join products 
+        on  products.record_id = purchase_orders.product_id
+        `,
+                };
         const result = await pool.query(query);
         res.status(200).json({ message: 'supplier fetched sucessfully', supplier: result.rows });
     } catch (error) {
@@ -1277,7 +1385,7 @@ app.post('/get-all-cities', authenticate, async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Internal server error in product added', error: error.message });
     }
-})
+});
 
 app.put('/update-stock', authenticate, async (req, res) => {
     const { product_id, store_id, quantity, reserved, available, date, status, stock_name, record_id } = req.body;
