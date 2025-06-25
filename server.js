@@ -12,7 +12,7 @@ const { authenticate } = require('./src/utils/authorization/authenticate');
 const { stat } = require('fs');
 const { type } = require('os');
 const assert = require('assert');
-const { nameRegex, fullnameRegex, emailRegex, passwordRegex, mobileRegex, latitudeRegex, longitudeRegex, websitesRegex, addressRegex } = require('./src/utils/authorization/regexauth');
+const { nameRegex, fullnameRegex, emailRegex, passwordRegex, mobileRegex, latitudeRegex, longitudeRegex, websitesRegex, addressRegex, dateRegex, quantityRegex, descriptionRegex, skuRegex, unitRegex, purchasePriceRegex, sellingPriceRegex, shortNameRegex } = require('./src/utils/authorization/regexauth');
 
 const app = express();
 
@@ -414,14 +414,22 @@ app.post('/user-login', async (req, res) => {
             return res.status(400).json({ message: 'Invalid email format ' });
         }
 
-        if (passwordRegex.test(password) === false) {
-            return res.status(400).json({ message: 'Invalid password format  like this StrongPass@2025' });
-        }
+        // if (passwordRegex.test(password) === false) {
+        //     return res.status(400).json({ message: 'Invalid password format  like this StrongPass@2025' });
+        // }
 
         const query = {
-            text: `SELECT * FROM users  WHERE email = $1
-            AND password =$2 ;`,
-            values: [email, password]
+            // text: `SELECT * FROM users  WHERE email = $1
+            // AND password =$2 ;`,
+            // values: [email, password]
+            text: `      SELECT c.name as country_name, ro.role_name, u.* from users AS u
+left join roles AS ro
+on u.role = ro.role_id
+left join countries c
+on
+c.country_code = u.countrys WHERE email = $1 AND password = $2
+ `  , values: [email, password]
+
         };
         console.log("query", query)
         const result = await pool.query(query);
@@ -442,10 +450,16 @@ app.post('/user-login', async (req, res) => {
 app.get('/get-all-lols', authenticate, async (req, res) => {
     try {
         const query = {
-            text: `select * from users`,
+            // text: `select * from users`,
+            text: `SELECT c.name as country_name,ro.role_name,u.* from users AS u
+left join roles AS ro
+on u.role =ro.role_id
+left join countries c
+on
+c.country_code = u.countrys`
         };
         const result = await pool.query(query);
-        res.status(201).json({ message: 'user fetched sucessfully', user: result.rows });
+        res.status(200).json({ message: 'user fetched sucessfully', user: result.rows });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error in user fetched' });
@@ -502,6 +516,12 @@ app.post('/add-store', upload.single("profile"), authenticate, async (req, res) 
     if (fullnameRegex.test(purchase_name) === false) {
         return res.status(400).json({ message: 'Invalid purchase name format' });
     }
+    // if (dateRegex.test(date)=== false){
+    // return res.status(400).json({ message: 'Invalid date format' });
+    // }
+
+ 
+
 
     const sortedImage = `${base}${file.filename}`;
 
@@ -561,19 +581,54 @@ app.post('/add-store', upload.single("profile"), authenticate, async (req, res) 
 });
 app.put('/update-store', upload.single("profile"), authenticate, async (req, res) => {
 
-    const { store_name, latitudes, longitude, store_type, address, phone,
-        email, website,
+    const { store_name, latitudes, longitude, store_type, address, phone, email, website,
         store_owner_name, purchase_name, no_of_branches, tax_ntn,
-        location, status, record_id } = req.body;
+        location, status, record_id 
+    } = req.body;
   
     if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: 'No data provided' });
     }
-    const base = 'http://localhost:9900/static/images/';
-    const file = req?.file;
-    console.log("profile", file);
-    const sabkuch_fix = `${base}${file?.filename}`
-    console.log("sabkuch_fix", sabkuch_fix);
+
+    if (shortNameRegex.test(store_name) === false) {
+        return res.status(400).json({ message: 'Invalid store name format' });
+    }
+    if (latitudeRegex.test(latitudes) === false) {
+        return res.status(400).json({ message: 'Invalid latitude format 24.8607' });
+    }
+    if (longitudeRegex.test(longitude) === false) {
+        return res.status(400).json({ message: 'Invalid longitude format 67.0011' });
+    }
+    if (emailRegex.test(email) === false) {
+        return res.status(400).json({ message: 'Invalid email format ' });
+    }
+    if (mobileRegex.test(phone) === false) {
+        return res.status(400).json({ message: 'Invalid phone format 03xx-xxxxxxx' });
+    }
+    if (websitesRegex.test(website) === false) {
+        return res.status(400).json({ message: 'Invalid website format' });
+    }
+    if (addressRegex.test(address) === false) {
+        return res.status(400).json({
+            message: 'Invalid address format St. Johns Road, Saddar, Karachi'
+        });
+    }
+    if (shortNameRegex.test(store_owner_name) === false) {
+        return res.status(400).json({ message: 'Invalid store owner name format' });
+    }
+    if (shortNameRegex.test(purchase_name) === false) {
+        return res.status(400).json({ message: 'Invalid purchase name format' });
+    }
+
+   
+    
+    
+    
+    // const base = 'http://localhost:9900/static/images/';
+    // const file = req?.file;
+    // console.log("profile", file);
+    // const sabkuch_fix = `${base}${file?.filename}`
+    // console.log("sabkuch_fix", sabkuch_fix);
     if (
         !store_name || !latitudes || !longitude || !store_type ||
         !address || !phone || !email || !website ||
@@ -583,9 +638,8 @@ app.put('/update-store', upload.single("profile"), authenticate, async (req, res
     ) {
         return res.status(400).json({ message: 'All fields are required ' });
     }
-    // if (typeof status !== 'boolean') {
-    //     return res.status(400).json({ message: 'Status must be true or false only' });
-    // }
+   
+
     const alloweds = [
         'store_name', 'latitudes', 'longitude', 'store_type', 'address', 'phone', 'email', 'website',
         'store_owner_name', 'purchase_name', 'no_of_branches', 'tax_ntn', 'location', 'status', 'record_id', 'profile'
@@ -595,9 +649,16 @@ app.put('/update-store', upload.single("profile"), authenticate, async (req, res
         return res.status(400).json({ message: `Invalid fields:${invalidFields.join(',')}` });
     }
     try {
+    
+        const base = 'http://localhost:9900/static/images/';
+        const file = req?.file;
+        console.log("profile", file);
+        const sabkuch_fix = `${base}${file?.filename}`
+        console.log("sabkuch_fix", sabkuch_fix);
+
         let tempimg = sabkuch_fix;
         if (req?.file == undefined || req?.file == null) {
-            const exist_pr = `select * from store where record_id='store_b2801594-857b-482a-bb14-7457c52134df'`;
+            const exist_pr = `select * from store where record_id='${record_id}' and is_deleted = false`;
             const existing_profile = await pool.query(exist_pr);
             console.log("exist_data", existing_profile.rows[0].image)
             const ex_data = existing_profile.rows[0].image;
@@ -678,6 +739,10 @@ app.post('/add-store-type', authenticate, async (req, res) => {
         if (!store_name || !status) {
             return res.status(400).json({ message: 'all fields are required' });
         }
+        
+        if(nameRegex.test(store_name) === false){
+            return res.status(400).json({ message: 'store name is not valid' });
+        }
 
         const query = {
             text: `INSERT INTO public.store_type (
@@ -697,6 +762,8 @@ app.post('/add-store-type', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Internal server error in store type added', error: error });
     }
 });
+
+// done 6-17-2025
 
 app.patch('/delete-store',authenticate,async (req,res)=>{
     const { record_id } = req.body;
@@ -736,8 +803,18 @@ app.post('/add-stock', authenticate, async (req, res) => {
     }
     try {
         const { product_id, store_id, quantity, reserved, available, created_by, approved_by, date, stock_name, status } = req.body;
-
-
+       
+    if( quantityRegex.test(quantity) === false ){
+        return res.status(400).json({ message: `quantity is not valid` });
+    }
+    
+    if( quantityRegex.test(reserved) === false ){
+        return res.status(400).json({ message: ` Use Numbers Only ` });
+    }
+ 
+    if( quantityRegex.test(available) === false ){
+        return res.status(400).json({ message: ` Use Numbers Only ` });
+    }
         // ✅ Validate allowed fields
         const allowedFields = [
             'product_id',
@@ -799,7 +876,16 @@ app.post('/add-stock', authenticate, async (req, res) => {
 app.get('/get-stock', authenticate, async (req, res) => {
     try {
         const query = {
-            text: `select * from stock where is_deleted = false`,
+            // text: `select * from stock where is_deleted = false`,
+            text:` select 
+ p.name AS pname ,s.store_name , st.* from stock AS st
+ left join store AS s
+ on st.store_id = s.record_id
+ left join  products p
+ on 
+ p.record_id = st.product_id 
+ where st.is_deleted = false
+`,
         };
         const result = await pool.query(query);
         res.status(200).json({ message: 'stock fetched sucessfully', stock: result.rows });
@@ -808,6 +894,8 @@ app.get('/get-stock', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Internal server error in stock fetched' });
     }
 });
+
+// done 6-17-2025
 
 // products management
 //  categories 12-4-2025
@@ -847,8 +935,23 @@ app.post('/add-suplier', authenticate, async (req, res) => {
         if (typeof status !== 'boolean') {
             return res.status(400).json({ message: 'Status must be true or false only' });
         } 
+   
+        if (fullnameRegex.test(name)=== false){
+            return res.status(400).json({ message: 'Invalid name format' });
+        } 
+        if (fullnameRegex.test(contact_person)=== false){
+            return res.status(400).json({ message: 'Invalid contact person format' });
+        }
+        if (emailRegex.test(email)=== false){
+            return res.status(400).json({ message: 'Invalid email format' });
+        }        
 
-
+        if (addressRegex.test (address)=== false ){
+            return res.status(400).json({ message: 'Invalid address format' });
+        }
+        if (mobileRegex.test(phone) === false) {
+            return res.status(400).json({ message: 'Invalid phone format 03xx-xxxxxxx' });
+        }
         // Check for existing supplier_id
         const checkSupplierIdQuery = {
             text: `SELECT 1 FROM public.suppliers WHERE supplier_id = $1`,
@@ -895,6 +998,24 @@ app.put('/update-supplier',authenticate ,async (req,res)=>{
 
     if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ message: 'No data provided' });
+    }
+
+    if (fullnameRegex.test(name) === false) {
+        return res.status(400).json({ message: 'Invalid name format' });
+    }
+    if (fullnameRegex.test(contact_person) === false) {
+        return res.status(400).json({ message: 'Invalid contact person format' });
+    }
+    if (emailRegex.test(email) === false) {
+        return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    if (addressRegex.test(address) === false) {
+        return res.status(400).json({ message: 'Invalid address format' });
+    }
+
+    if (mobileRegex.test(phone) === false) {
+        return res.status(400).json({ message: 'Invalid phone format 03xx-xxxxxxx' });
     }
 
    const allowedfields =[
@@ -986,6 +1107,9 @@ app.get('/get-supplier', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Internal server error in supplier fetched' });
     }
 });
+
+// ya tak done ha 
+
 // ya supplier ka sapret get kia api ha gis sa ma dropdown ma data show kro ga 4-16-2025
 app.get('/get-supplier-data', authenticate, async (req, res) => {
     try {
@@ -1010,8 +1134,28 @@ app.post('/add-product', authenticate, async (req, res) => {
     }
     try {
         const {
-            product_id, name, description, sku, unit, purchase_price, selling_price, status, updated_at } = req.body;
-        if (typeof status !== 'boolean') {
+product_id,name,description,sku,unit,purchase_price, selling_price, status, updated_at 
+} = req.body;
+     if( nameRegex.test(name)=== false){
+            return res.status(400).json({ message: 'Invalid name format' });
+     } 
+     if(descriptionRegex.test(description)=== false){
+        return res.status(400).json({ message: 'Invalid description format or to short ' });
+      }    
+     if (skuRegex.test(sku) === false) {
+            return res.status(400).json({ message: 'Invalid sku format' });
+     }
+    if(unitRegex.test(unit) === false){
+        return res.status(400).json({ message: 'Invalid unit format Valid:pcs, kg, ltr, box, meter '});
+    }
+ if( purchasePriceRegex.test(purchase_price) === false){
+     return res.status(400).json({ message: 'Invalid purchase price format comma not allowed '});
+ }
+ if( sellingPriceRegex.test(selling_price)=== false){
+     return res.status(400).json({ message: 'Invalid selling price format comma not allowed '});
+ }
+       
+            if (typeof status !== 'boolean') {
             return res.status(400).json({ message: 'Status must be true or false only' });
         }
         const allowedFields = [
@@ -1399,6 +1543,21 @@ app.put('/update-stock', authenticate, async (req, res) => {
     if (typeof status !== 'boolean') {
         return res.status(400).json({ message: 'Status must be true or false only' });
     }
+
+
+    if (quantityRegex.test(quantity) === false) {
+        return res.status(400).json({ message: `quantity is not valid` });
+    }
+
+    if (quantityRegex.test(reserved) === false) {
+        return res.status(400).json({ message: ` Use Numbers Only ` });
+    }
+
+    if (quantityRegex.test(available) === false) {
+        return res.status(400).json({ message: ` Use Numbers Only ` });
+    }
+
+
     // ✅ Validate allowed fields in the request body 
     const allowedFields = ['product_id', 'store_id', 'quantity', 'reserved', 'available', 'date', 'status', 'stock_name', 'record_id'];
     const extraFields = Object.keys(req.body).filter(keys => !allowedFields.includes(keys));
